@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">
+            <i class="bi bi-clipboard2-data me-2"></i> Visitor Reports
+        </h1>
+        <p class="text-muted mb-0">Detailed analytics and records of all visitor activities</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i> Filter Records</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="date" class="form-label">Date Range</label>
+                <div class="input-group">
+                    <input type="date" class="form-control" id="start_date" name="start_date"
+                           value="{{ request.args.get('start_date', '') }}" placeholder="From">
+                    <span class="input-group-text"><i class="bi bi-arrow-right"></i></span>
+                    <input type="date" class="form-control" id="end_date" name="end_date"
+                           value="{{ request.args.get('end_date', '') }}" placeholder="To">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="name" class="form-label">Visitor Name</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="name" name="name"
+                           placeholder="Search by name" value="{{ request.args.get('name', '') }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="computer" class="form-label">Device Status</label>
+                <select class="form-select" id="computer" name="computer">
+                    <option value="">All Visitors</option>
+                    <option value="with" {% if request.args.get('computer') == 'with' %}selected{% endif %}>With Computers</option>
+                    <option value="without" {% if request.args.get('computer') == 'without' %}selected{% endif %}>Without Computers</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Visit Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active Visits</option>
+                    <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed Visits</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2 flex-grow-1">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+                <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary" title="Reset filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3 h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Total Visits</h6>
+                        <h2 class="mb-0">{{ stats.total_visits }}</h2>
+                    </div>
+                    <div class="icon-circle">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-white text-primary">
+                        <i class="bi bi-arrow-up"></i> {{ stats.visits_today }} today
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3 h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Computer Users</h6>
+                        <h2 class="mb-0">{{ stats.computer_users }}</h2>
+                        <small>{{ stats.computer_percentage }}% of total</small>
+                    </div>
+                    <div class="icon-circle">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3 h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Avg. Duration</h6>
+                        <h2 class="mb-0">{{ stats.avg_duration }} mins</h2>
+                    </div>
+                    <div class="icon-circle">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-white text-info">
+                        <i class="bi bi-graph-up"></i> {{ stats.avg_duration_change }}% from last week
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-dark mb-3 h-100 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Currently Active</h5>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <h6 class="card-subtitle text-muted mb-0">Visitors</h6>
+                    <h2 class="mb-0">{{ stats.active_visits }}</h2>
+                </div>
+                <div class="icon-circle text-warning">
+                    <i class="bi bi-person-check" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+            <div class="mt-2">
+                <span class="badge bg-secondary text-white">
+                    <i class="bi bi-laptop"></i> {{ stats.active_computers }} with devices
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">Visitor Records</h5>
+            <small class="text-muted">Showing {{ visitors.items|length }} of {{ visitors.total }} records</small>
+        </div>
+        <div>
+            <span class="badge bg-light text-dark">
+                Page {{ visitors.page }} of {{ visitors.pages }}
+            </span>
+            <button class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#columnsModal">
+                <i class="bi bi-gear"></i> Columns
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID#</th>
+                        <th>Visitor Name</th>
+                        <th>Contact</th>
+                        <th>Visit Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Duration</th>
+                        <th>Device</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visitor in visitors.items %}
+                    <tr>
+                        <td class="fw-bold">#{{ visitor.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle-sm me-2">
+                                    {{ visitor.name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ visitor.name }}</div>
+                                    <small class="text-muted">Purpose: {{ visitor.purpose or 'Not specified' }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ visitor.phone }}</div>
+                            <small class="text-muted">{{ visitor.email or 'No email' }}</small>
+                        </td>
+                        <td>{{ visitor.time_in.astimezone(kigali_tz).strftime('%b %d, %Y') }}</td>
+                        <td>{{ visitor.time_in.astimezone(kigali_tz).strftime('%I:%M %p') }}</td>
+                        <td>
+                            {% if visitor.time_out %}
+                                {{ visitor.time_out.astimezone(kigali_tz).strftime('%I:%M %p') }}
+                            {% else %}
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visitor.time_out %}
+                                <span class="duration-badge">
+                                    {{ ((visitor.time_out - visitor.time_in).total_seconds() / 60)|round|int }} mins
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visitor.has_computer %}
+                                <div class="device-info">
+                                    <i class="bi bi-laptop me-1"></i>
+                                    <span class="fw-bold">{{ visitor.computer_brand }}</span>
+                                    <small class="d-block text-muted">{{ visitor.computer_serial }}</small>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-light text-dark">No device</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visitor.time_out %}
+                                <span class="badge bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-check-circle me-1"></i> Not here
+                                </span>
+                            {% else %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-hourglass-split me-1"></i> Present
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                        id="actionsDropdown{{ visitor.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="actionsDropdown{{ visitor.id }}">
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                           data-bs-target="#visitorDetailsModal" 
+                                           data-visitor-id="{{ visitor.id }}">
+                                            <i class="bi bi-eye me-2"></i>View Details
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="bi bi-printer me-2"></i>Print Receipt
+                                        </a>
+                                    </li>
+                                    {% if not visitor.time_out %}
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Force Checkout
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="bi bi-clipboard-x" style="font-size: 3rem; color: #6c757d;"></i>
+                                <h5 class="mt-3">No records found</h5>
+                                <p class="text-muted">Try adjusting your filters or add new visitors</p>
+                                <a href="{{ url_for('check_in') }}" class="btn btn-primary mt-2">
+                                    <i class="bi bi-plus-circle"></i> Add New Visitor
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if visitors.pages > 1 %}
+        <div class="p-3 border-top">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if visitors.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports', page=visitors.prev_num, **request.args) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in visitors.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == visitors.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('reports', page=page_num, **request.args) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if visitors.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports', page=visitors.next_num, **request.args) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+        
+    </div>
+{% if session.get('is_admin') %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0"><i class="bi bi-download me-2"></i> Export Options</h6>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('export_reports', format='csv', **request.args) }}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-excel me-1"></i> CSV
+            </a>
+            <a href="{{ url_for('export_reports', format='pdf', **request.args) }}" class="btn btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+            </a>
+            <a href="{{ url_for('export_reports', format='print', **request.args) }}" onclick="window.print()" class="btn btn-outline-secondary">
+                <i class="bi bi-printer me-1"></i> Print
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+<!-- Columns Visibility Modal -->
+<div class="modal fade" id="columnsModal" tabindex="-1" aria-labelledby="columnsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="columnsModalLabel">Manage Table Columns</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colID" checked>
+                    <label class="form-check-label" for="colID">
+                        ID Number
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colName" checked>
+                    <label class="form-check-label" for="colName">
+                        Visitor Name
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colContact" checked>
+                    <label class="form-check-label" for="colContact">
+                        Contact Information
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colDate" checked>
+                    <label class="form-check-label" for="colDate">
+                        Visit Date
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colTimeIn" checked>
+                    <label class="form-check-label" for="colTimeIn">
+                        Time In
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colTimeOut" checked>
+                    <label class="form-check-label" for="colTimeOut">
+                        Time Out
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colDuration" checked>
+                    <label class="form-check-label" for="colDuration">
+                        Duration
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colDevice" checked>
+                    <label class="form-check-label" for="colDevice">
+                        Device Information
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colStatus" checked>
+                    <label class="form-check-label" for="colStatus">
+                        Status
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="colActions" checked>
+                    <label class="form-check-label" for="colActions">
+                        Actions
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visitor Details Modal -->
+<div class="modal fade" id="visitorDetailsModal" tabindex="-1" aria-labelledby="visitorDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="visitorDetailsModalLabel">Visitor Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded via JavaScript -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Print Details</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block styles %}
+<style>
+    .avatar-circle-sm {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .duration-badge {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    
+    .device-info {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 4px 8px;
+        display: inline-block;
+    }
+    
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .bg-indigo {
+        background-color: #6610f2;
+    }
+    
+    .text-indigo {
+        color: #6610f2;
+    }
+    
+    .table th {
+        white-space: nowrap;
+    }
+    
+    .report-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Visitor details modal handler
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#visitorDetailsModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var visitorId = button.data('visitor-id');
+            var modal = $(this);
+            
+            // Load content via AJAX
+            modal.find('.modal-body').load('/visitor/' + visitorId + '/details');
+        });
+        
+        // Column visibility toggle (simplified example)
+        $('input[type="checkbox"]').change(function() {
+            var columnId = $(this).attr('id').replace('col', '');
+            // In a real implementation, you would hide/show columns here
+            // and save preferences to localStorage
+        });
+    });
+</script>
+{% endblock %}

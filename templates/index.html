@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block content %}
+<nav>
+    <ul>
+        <li class="nav-right">
+            {% if session.get('is_admin') %}
+            <div class="admin-toggle">
+                <a href="{{ url_for('admin.index') }}" class="admin-toggle-btn {% if request.path == url_for('admin.index') %}active{% endif %}">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </div>
+            {% endif %}           
+            {% if session.get('user') %}
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+            {% endif %}
+        </li>
+    </ul>
+</nav>
+<div class="dashboard-container">
+    <!-- Header with animated background -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>
+                <i class="bi bi-journal-text"></i> Library Visitor Management
+            </h1>
+            <p class="text-light mb-0">Today is <strong>{{ now.strftime('%A, %B %d, %Y') }}</strong></p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('check_in') }}" class="btn btn-light btn-glow">
+                <i class="bi bi-person-plus"></i> Check-In Visitor
+            </a>
+            <a href="{{ url_for('reports') }}" class="btn btn-outline-light ms-2">
+                <i class="bi bi-clipboard-data"></i> Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards with hover effects -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Active Visitors</span>
+                <span class="stat-value">{{ active_visitors|length }}</span>
+            </div>
+            <div class="stat-progress"></div>
+        </div>
+
+        <div class="stat-card stat-card-success">
+            <div class="stat-icon">
+                <i class="bi bi-laptop"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">brought Computers</span>
+                <span class="stat-value">{{ computer_users }}</span>
+                <span class="stat-percentage">
+                    {{ (computer_users / active_visitors|length) * 100 if active_visitors|length > 0 else 0 | round(1) }}%
+                </span>
+            </div>
+            <div class="stat-progress"></div>
+        </div>
+
+        <div class="stat-card stat-card-info">
+            <div class="stat-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Today's Visits</span>
+                <span class="stat-value">{{ today_count }}</span>
+            </div>
+            <div class="stat-progress"></div>
+        </div>
+
+        <div class="stat-card stat-card-warning">
+            <div class="stat-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Avg. Visit Duration</span>
+                <span class="stat-value">{{ avg_duration }}</span>
+                <span class="stat-trend">
+                    <i class="bi bi-arrow-up"></i> 12%
+                </span>
+            </div>
+            <div class="stat-progress"></div>
+        </div>
+    </div>
+
+    <!-- Enhanced Search with floating label -->
+    <div class="search-container">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="search-visitors" class="form-control" placeholder=" ">
+            <label>Search visitors by name...</label>
+        </div>
+        <button class="btn btn-filter">
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+    </div>
+
+    <!-- Visitor Table with modern design -->
+    <div class="visitor-table-container">
+        <div class="table-header">
+            <h3>Currently Signed In Visitors</h3>
+            <span class="badge bg-primary">{{ active_visitors|length }} active</span>
+        </div>
+        
+        {% if active_visitors %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID#</th>
+                        <th>Visitor</th>
+                        <th>Contact</th>
+                        <th>Time In</th>
+                        <th>Device</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="visitors-table-body">
+                    {% for visitor in active_visitors %}
+                    <tr>
+                        <td class="visitor-id">
+                            <span class="badge bg-light text-dark">#{{ visitor.id }}</span>
+                        </td>
+                        <td class="visitor-info">
+                            <div class="avatar">
+                                {{ visitor.name[0]|upper }}
+                            </div>
+                            <div>
+                                <strong>{{ visitor.name }}</strong>
+                                <small>Visit #{{ visitor.total_visits if visitor.total_visits else 1 }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="tel:{{ visitor.phone }}" class="text-reset">
+                                <i class="bi bi-telephone"></i> {{ visitor.phone }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="time-in">
+                                <span>{{ visitor.time_in.strftime('%H:%M') }}</span>
+                                <small>{{ visitor.time_in.strftime('%I:%M %p') }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if visitor.has_computer %}
+                            <div class="device-tag">
+                                <i class="bi bi-laptop"></i>
+                                <span>{{ visitor.computer_brand }} ({{ visitor.computer_serial[:4] }}...)</span>
+                            </div>
+                            {% else %}
+                            <span class="badge bg-secondary">No device</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="{{ url_for('check_out', visitor_id=visitor.id) }}"
+                               class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-box-arrow-right"></i> Check Out
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h4>No active visitors</h4>
+            <p>There are currently no visitors signed in to the library</p>
+            <a href="{{ url_for('check_in') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Check in first visitor
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Custom CSS for the enhanced dashboard */
+    .dashboard-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+        color: white;
+        padding: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .dashboard-header h1 {
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.8rem;
+    }
+    
+    .btn-glow {
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-glow:hover {
+        box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        transform: translateY(-2px);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card-primary {
+        border-left: 4px solid #3a7bd5;
+    }
+    
+    .stat-card-success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .stat-card-info {
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .stat-card-warning {
+        border-left: 4px solid #ffc107;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.2;
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        display: block;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .stat-percentage {
+        font-size: 0.8rem;
+        background: rgba(40,167,69,0.1);
+        color: #28a745;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        margin-left: 0.5rem;
+    }
+    
+    .stat-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: rgba(0,0,0,0.05);
+        width: 100%;
+    }
+    
+    .search-container {
+        display: flex;
+        gap: 1rem;
+        padding: 0 1.5rem 1.5rem;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-box input {
+        padding-left: 3rem;
+        height: 50px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .search-box label {
+        position: absolute;
+        left: 3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+        transition: all 0.2s ease;
+    }
+    
+    .search-box input:focus + label,
+    .search-box input:not(:placeholder-shown) + label {
+        top: 0;
+        left: 3.2rem;
+        font-size: 0.8rem;
+        background: white;
+        padding: 0 0.5rem;
+    }
+    
+    .btn-filter {
+        height: 50px;
+        border-radius: 10px;
+        background: white;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .visitor-table-container {
+        background: white;
+        margin: 0 1.5rem 1.5rem;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    .table-header {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 500;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 1rem;
+    }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #3a7bd5;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+    
+    .visitor-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .visitor-info small {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .time-in small {
+        display: block;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .device-tag {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(0,210,255,0.1);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        color: #3a7bd5;
+        font-size: 0.9rem;
+    }
+    
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-actions {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .search-container {
+            flex-direction: column;
+        }
+        
+        .search-box, .btn-filter {
+            width: 100%;
+        }
+        
+        .actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Search functionality
+        const searchInput = document.getElementById('search-visitors');
+        const rows = document.querySelectorAll('#visitors-table-body tr');
+        
+        searchInput.addEventListener('input', e => {
+            const value = e.target.value.toLowerCase();
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(value) ? '' : 'none';
+            });
+        });
+        
+        // Add hover effects to stat cards
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const progress = card.querySelector('.stat-progress');
+                progress.style.width = '100%';
+                progress.style.transition = 'width 1.5s ease';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                const progress = card.querySelector('.stat-progress');
+                progress.style.width = '0%';
+                progress.style.transition = 'width 0.5s ease';
+            });
+        });
+    });
+</script>
+{% endblock %}

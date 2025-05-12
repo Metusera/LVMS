@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Check-In</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .checkin-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-top: 4px solid #0d6efd;
+        }
+        .form-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .computer-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .serial-hint {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card checkin-card">
+                    <div class="card-body p-4">
+                        <!-- Header Section -->
+                        <div class="form-header mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-journal-text fs-1 me-3 text-primary"></i>
+                                <div>
+                                    <h2 class="mb-0">Library Visitor Check-In</h2>
+                                    <p class="text-muted">Please fill in your details below</p>
+                                </div>
+                            </div>
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <!-- Check-In Form -->
+                        <form method="POST" class="needs-validation" novalidate>
+                            <!-- Personal Information Section -->
+                            <div class="mb-4">
+                                <h5 class="mb-3"><i class="bi bi-person-badge"></i> Personal Information</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="name" class="form-label required-field">Full Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                        <div class="invalid-feedback">
+                                            Please provide your full name
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label required-field">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                                        <div class="invalid-feedback">
+                                            Please provide a valid phone number
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Computer Information Section -->
+                            <div class="mb-4">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="hasComputer" name="has_computer">
+                                    <label class="form-check-label" for="hasComputer">
+                                        <strong>I am bringing my personal computer</strong>
+                                    </label>
+                                </div>
+
+                                <div id="computerFields" class="computer-section p-3" style="display: none;">
+                                    <h5 class="mb-3"><i class="bi bi-laptop"></i> Computer Details</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="computer_brand" class="form-label required-field">Brand/Model</label>
+                                            <input type="text" class="form-control" id="computer_brand" name="computer_brand">
+                                            <div class="invalid-feedback">
+                                                Please specify computer brand
+                                            </div>
+                                            <small class="serial-hint">e.g., HP EliteBook, Lenovo ThinkPad, MacBook Air</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="computer_serial" class="form-label required-field">Serial Number</label>
+                                            <input type="text" class="form-control" id="computer_serial" name="computer_serial">
+                                            <div class="invalid-feedback">
+                                                Please provide the serial number
+                                            </div>
+                                            <small class="serial-hint">
+                                                Usually found on the bottom/back of the device
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-info-circle"></i> For security purposes, we record computer details of all devices brought into the library.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms and Submit -->
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the library's <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and conditions</a>
+                                </label>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle"></i> Complete Check-In
+                                </button>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Library Terms and Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>By checking in to the library, you agree to:</p>
+                    <ul>
+                        <li>Follow all library rules and regulations</li>
+                        <li>Be responsible for your personal belongings</li>
+                        <li>Present your computer for verification when checking out if required</li>
+                        <li>Check out before leaving the library premises</li>
+                    </ul>
+                    <p class="mb-0">The library reserves the right to inspect any devices brought into the facility for security purposes.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle computer fields
+        document.getElementById('hasComputer').addEventListener('change', function() {
+            const computerFields = document.getElementById('computerFields');
+            computerFields.style.display = this.checked ? 'block' : 'none';
+            
+            // Toggle required attribute
+            document.getElementById('computer_brand').required = this.checked;
+            document.getElementById('computer_serial').required = this.checked;
+        });
+
+        // Form validation
+        (function() {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+
+        // Auto-uppercase serial number
+        document.getElementById('computer_serial')?.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>

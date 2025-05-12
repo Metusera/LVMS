@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Log
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">Visitor Details</h4>
+    </div>
+    <div class="card-body">
+        {% if visitor %}
+        <h5 class="card-title">{{ visitor.name }}</h5>
+        <p class="card-text"><strong>ID:</strong> {{ visitor.id }}</p>
+        <p class="card-text"><strong>Phone:</strong> {{ visitor.phone }}</p>
+        <p class="card-text"><strong>Time In:</strong> {{ visitor.time_in.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% if visitor.time_out %}
+        <p class="card-text"><strong>Time Out:</strong> {{ visitor.time_out.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% else %}
+        <p class="card-text"><strong>Status:</strong> Currently Signed In</p>
+        {% endif %}
+        {% if visitor.has_computer %}
+        <p class="card-text"><strong>Computer:</strong> Yes</p>
+        <p class="card-text"><strong>Computer Brand:</strong> {{ visitor.computer_brand }}</p>
+        <p class="card-text"><strong>Computer Serial:</strong> {{ visitor.computer_serial }}</p>
+        {% else %}
+        <p class="card-text"><strong>Computer:</strong> No</p>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-danger mb-0">
+            Visitor not found.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="bi bi-box-arrow-right"></i> Visitor Check-Out</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <!-- Visitor Information -->
+                    <div class="mb-4">
+                        <h5>Visitor Details</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" value="{{ visitor.name }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="text" class="form-control" value="{{ visitor.phone }}" readonly>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Time In</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ visitor.time_in.strftime('%Y-%m-%d %H:%M') }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Computer Verification -->
+                    {% if visitor.has_computer %}
+                    <div class="mb-4">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Computer verification required
+                        </div>
+                        <div class="p-3 border rounded">
+                            <h5><i class="bi bi-laptop"></i> Registered Computer</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Brand</label>
+                                    <input type="text" class="form-control" value="{{ visitor.computer_brand }}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Serial Number</label>
+                                    <input type="text" class="form-control" value="{{ visitor.computer_serial }}" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label for="serial_verify" class="form-label required-field">
+                                        Verify Serial Number
+                                    </label>
+                                    <input type="text" class="form-control" id="serial_verify" 
+                                           name="computer_serial" required placeholder="Enter the serial number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-box-arrow-right"></i> Confirm Check-Out
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if visitor.has_computer %}
+{% block extra_js %}
+<script>
+    // Auto-uppercase serial number input
+    document.getElementById('serial_verify').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+</script>
+{% endblock %}
+{% endif %}
+{% endblock %}
