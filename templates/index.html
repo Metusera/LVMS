@@ -1,27 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<nav>
-    <ul>
-        <li class="nav-right">
-            {% if session.get('is_admin') %}
-            <div class="admin-toggle">
-                <a href="{{ url_for('admin.index') }}" class="admin-toggle-btn {% if request.path == url_for('admin.index') %}active{% endif %}">
-                    <i class="fas fa-cog"></i> Admin Panel
-                </a>
-            </div>
-            {% endif %}           
-            {% if session.get('user') %}
-                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
-            {% endif %}
-        </li>
-    </ul>
-</nav>
 <div class="dashboard-container">
-    <!-- Header with animated background -->
-    <div class="dashboard-header">
+    <!-- Header Section -->
+    <header class="dashboard-header">
         <div class="header-content">
             <h1>
                 <i class="bi bi-journal-text"></i> Library Visitor Management
@@ -35,172 +17,215 @@
             <a href="{{ url_for('reports') }}" class="btn btn-outline-light ms-2">
                 <i class="bi bi-clipboard-data"></i> Reports
             </a>
-        </div>
-    </div>
-
-    <!-- Stats Cards with hover effects -->
-    <div class="stats-grid">
-        <div class="stat-card stat-card-primary">
-            <div class="stat-icon">
-                <i class="bi bi-people-fill"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Active Visitors</span>
-                <span class="stat-value">{{ active_visitors|length }}</span>
-            </div>
-            <div class="stat-progress"></div>
-        </div>
-
-        <div class="stat-card stat-card-success">
-            <div class="stat-icon">
-                <i class="bi bi-laptop"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">brought Computers</span>
-                <span class="stat-value">{{ computer_users }}</span>
-                <span class="stat-percentage">
-                    {{ (computer_users / active_visitors|length) * 100 if active_visitors|length > 0 else 0 | round(1) }}%
-                </span>
-            </div>
-            <div class="stat-progress"></div>
-        </div>
-
-        <div class="stat-card stat-card-info">
-            <div class="stat-icon">
-                <i class="bi bi-calendar-check"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Today's Visits</span>
-                <span class="stat-value">{{ today_count }}</span>
-            </div>
-            <div class="stat-progress"></div>
-        </div>
-
-        <div class="stat-card stat-card-warning">
-            <div class="stat-icon">
-                <i class="bi bi-clock-history"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Avg. Visit Duration</span>
-                <span class="stat-value">{{ avg_duration }}</span>
-                <span class="stat-trend">
-                    <i class="bi bi-arrow-up"></i> 12%
-                </span>
-            </div>
-            <div class="stat-progress"></div>
-        </div>
-    </div>
-
-    <!-- Enhanced Search with floating label -->
-    <div class="search-container">
-        <div class="search-box">
-            <i class="bi bi-search"></i>
-            <input type="text" id="search-visitors" class="form-control" placeholder=" ">
-            <label>Search visitors by name...</label>
-        </div>
-        <button class="btn btn-filter">
-            <i class="bi bi-funnel"></i> Filters
-        </button>
-    </div>
-
-    <!-- Visitor Table with modern design -->
-    <div class="visitor-table-container">
-        <div class="table-header">
-            <h3>Currently Signed In Visitors</h3>
-            <span class="badge bg-primary">{{ active_visitors|length }} active</span>
-        </div>
-        
-        {% if active_visitors %}
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID#</th>
-                        <th>Visitor</th>
-                        <th>Contact</th>
-                        <th>Time In</th>
-                        <th>Device</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="visitors-table-body">
-                    {% for visitor in active_visitors %}
-                    <tr>
-                        <td class="visitor-id">
-                            <span class="badge bg-light text-dark">#{{ visitor.id }}</span>
-                        </td>
-                        <td class="visitor-info">
-                            <div class="avatar">
-                                {{ visitor.name[0]|upper }}
-                            </div>
-                            <div>
-                                <strong>{{ visitor.name }}</strong>
-                                <small>Visit #{{ visitor.total_visits if visitor.total_visits else 1 }}</small>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="tel:{{ visitor.phone }}" class="text-reset">
-                                <i class="bi bi-telephone"></i> {{ visitor.phone }}
-                            </a>
-                        </td>
-                        <td>
-                            <div class="time-in">
-                                <span>{{ visitor.time_in.strftime('%H:%M') }}</span>
-                                <small>{{ visitor.time_in.strftime('%I:%M %p') }}</small>
-                            </div>
-                        </td>
-                        <td>
-                            {% if visitor.has_computer %}
-                            <div class="device-tag">
-                                <i class="bi bi-laptop"></i>
-                                <span>{{ visitor.computer_brand }} ({{ visitor.computer_serial[:4] }}...)</span>
-                            </div>
-                            {% else %}
-                            <span class="badge bg-secondary">No device</span>
-                            {% endif %}
-                        </td>
-                        <td class="actions">
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <a href="{{ url_for('check_out', visitor_id=visitor.id) }}"
-                               class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-box-arrow-right"></i> Check Out
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="bi bi-people"></i>
-            </div>
-            <h4>No active visitors</h4>
-            <p>There are currently no visitors signed in to the library</p>
-            <a href="{{ url_for('check_in') }}" class="btn btn-primary">
-                <i class="bi bi-person-plus"></i> Check in first visitor
+            {% if session.get('is_admin') %}
+            <a href="{{ url_for('admin.index') }}" class="btn btn-light btn-glow">
+                <i class="fas fa-cog"></i> Admin Panel
             </a>
+            {% endif %} 
+            {% if session.get('user') %}
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger ms-2">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+{% else %}
+    <a href="{{ url_for('login') }}" class="btn btn-outline-light ms-2">
+        <i class="fas fa-sign-in-alt"></i> Login
+    </a>
+{% endif %}
         </div>
-        {% endif %}
-    </div>
+    </header>
+
+    <!-- Statistics Section -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Active Visitors</span>
+                    <span class="stat-value">{{ active_visitors|length }}</span>
+                </div>
+                <div class="stat-progress"></div>
+            </div>
+
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">
+                    <i class="bi bi-laptop"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Computer Users</span>
+                    <span class="stat-value">{{ computer_users }}</span>
+                    <span class="stat-percentage">
+                        {{ (computer_users / active_visitors|length) * 100 if active_visitors|length > 0 else 0 | round(1) }}%
+                    </span>
+                </div>
+                <div class="stat-progress"></div>
+            </div>
+
+            <div class="stat-card stat-card-info">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Today's Visits</span>
+                    <span class="stat-value">{{ today_count }}</span>
+                </div>
+                <div class="stat-progress"></div>
+            </div>
+
+            <div class="stat-card stat-card-warning">
+                <div class="stat-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Avg. Visit Duration</span>
+                    <span class="stat-value">{{ avg_duration }}</span>
+                    <span class="stat-trend">
+                        <i class="bi bi-arrow-up"></i> 12%
+                    </span>
+                </div>
+                <div class="stat-progress"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search and Filter Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="search-visitors" class="form-control" placeholder=" ">
+                <label>Search visitors by name...</label>
+            </div>
+            <button class="btn btn-filter">
+                <i class="bi bi-funnel"></i> Filters
+            </button>
+        </div>
+    </section>
+
+    <!-- Visitor Table Section -->
+    <section class="visitor-section">
+        <div class="visitor-table-container">
+            <div class="table-header">
+                <h3>Currently visitors in library</h3>
+                <span class="badge bg-primary">{{ active_visitors|length }} active</span>
+            </div>
+            
+            {% if active_visitors %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID#</th>
+                            <th>Visitor</th>
+                            <th>Contact</th>
+                            <th>Time In</th>
+                            <th>Device</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="visitors-table-body">
+                        {% for visitor in active_visitors %}
+                        <tr>
+                            <td class="visitor-id">
+                                <span class="badge bg-light text-dark">#{{ visitor.id }}</span>
+                            </td>
+                            <td class="visitor-info">
+                                <div class="avatar">
+                                    {{ visitor.name[0]|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ visitor.name }}</strong>
+                                    <small>Visit #{{ visitor.total_visits if visitor.total_visits else 1 }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="tel:{{ visitor.phone }}" class="text-reset">
+                                    <i class="bi bi-telephone"></i> {{ visitor.phone }}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="time-in">
+                                    <span>{{ visitor.time_in.strftime('%H:%M') }}</span>
+                                    <small>{{ visitor.time_in.strftime('%I:%M %p') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if visitor.has_computer %}
+                                <div class="device-tag">
+                                    <i class="bi bi-laptop"></i>
+                                    <span>{{ visitor.computer_brand }} ({{ visitor.computer_serial[:4] }}...)</span>
+                                </div>
+                                {% else %}
+                                <span class="badge bg-secondary">No device</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a href="{{ url_for('check_out', visitor_id=visitor.id) }}"
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-box-arrow-right"></i> Check Out
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h4>No active visitors</h4>
+                <p>There are currently no visitors signed in to the library</p>
+                <a href="{{ url_for('check_in') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Check in first visitor
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
 </div>
 
+<!-- CSS Styles -->
 <style>
-    /* Custom CSS for the enhanced dashboard */
-    .dashboard-container {
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    /* Base Styles */
+    :root {
+        --primary-color: #3a7bd5;
+        --secondary-color: #00d2ff;
+        --success-color: #28a745;
+        --info-color: #17a2b8;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+        --gray-color: #6c757d;
+        --border-color: #dee2e6;
     }
     
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+    }
+    
+    /* Dashboard Container */
+    .dashboard-container {
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin: 20px auto;
+        max-width: 1400px;
+    }
+    
+    /* Header Styles */
     .dashboard-header {
-        background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         color: white;
-        padding: 2rem;
+        padding: 1.5rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -208,27 +233,50 @@
         gap: 1rem;
     }
     
-    .dashboard-header h1 {
+    .header-content h1 {
         font-weight: 600;
         margin: 0;
         font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    /* Button Styles */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     
     .btn-glow {
-        box-shadow: 0 0 10px rgba(255,255,255,0.3);
-        transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
     
     .btn-glow:hover {
-        box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         transform: translateY(-2px);
+    }
+    
+    /* Statistics Section */
+    .stats-section {
+        padding: 1.5rem;
     }
     
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 1.5rem;
-        padding: 1.5rem;
     }
     
     .stat-card {
@@ -237,56 +285,71 @@
         padding: 1.5rem;
         position: relative;
         overflow: hidden;
-        transition: transform 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid transparent;
     }
     
     .stat-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     }
     
     .stat-card-primary {
-        border-left: 4px solid #3a7bd5;
+        border-left-color: var(--primary-color);
     }
     
     .stat-card-success {
-        border-left: 4px solid #28a745;
+        border-left-color: var(--success-color);
     }
     
     .stat-card-info {
-        border-left: 4px solid #17a2b8;
+        border-left-color: var(--info-color);
     }
     
     .stat-card-warning {
-        border-left: 4px solid #ffc107;
+        border-left-color: var(--warning-color);
     }
     
     .stat-icon {
         font-size: 2rem;
-        opacity: 0.2;
+        opacity: 0.15;
         position: absolute;
         right: 1rem;
         top: 1rem;
+        color: inherit;
     }
     
     .stat-value {
         font-size: 1.8rem;
         font-weight: 600;
         display: block;
+        margin: 0.5rem 0;
     }
     
     .stat-label {
-        color: #6c757d;
+        color: var(--gray-color);
         font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
-    .stat-percentage {
+    .stat-percentage, .stat-trend {
         font-size: 0.8rem;
-        background: rgba(40,167,69,0.1);
-        color: #28a745;
         padding: 0.2rem 0.5rem;
         border-radius: 20px;
         margin-left: 0.5rem;
+        display: inline-block;
+    }
+    
+    .stat-percentage {
+        background: rgba(40, 167, 69, 0.1);
+        color: var(--success-color);
+    }
+    
+    .stat-trend {
+        background: rgba(255, 193, 7, 0.1);
+        color: var(--warning-color);
     }
     
     .stat-progress {
@@ -294,14 +357,18 @@
         bottom: 0;
         left: 0;
         height: 4px;
-        background: rgba(0,0,0,0.05);
-        width: 100%;
+        background: rgba(0, 0, 0, 0.05);
+        width: 0%;
+    }
+    
+    /* Search Section */
+    .search-section {
+        padding: 0 1.5rem 1.5rem;
     }
     
     .search-container {
         display: flex;
         gap: 1rem;
-        padding: 0 1.5rem 1.5rem;
         align-items: center;
     }
     
@@ -315,14 +382,22 @@
         left: 1rem;
         top: 50%;
         transform: translateY(-50%);
-        color: #6c757d;
+        color: var(--gray-color);
+        z-index: 2;
     }
     
     .search-box input {
         padding-left: 3rem;
         height: 50px;
         border-radius: 10px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .search-box input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(58, 123, 213, 0.1);
     }
     
     .search-box label {
@@ -330,7 +405,7 @@
         left: 3rem;
         top: 50%;
         transform: translateY(-50%);
-        color: #6c757d;
+        color: var(--gray-color);
         pointer-events: none;
         transition: all 0.2s ease;
     }
@@ -342,24 +417,36 @@
         font-size: 0.8rem;
         background: white;
         padding: 0 0.5rem;
+        color: var(--primary-color);
     }
     
     .btn-filter {
         height: 50px;
         border-radius: 10px;
         background: white;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-filter:hover {
+        background: #f8f9fa;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    /* Visitor Table Section */
+    .visitor-section {
+        padding: 0 1.5rem 1.5rem;
     }
     
     .visitor-table-container {
         background: white;
-        margin: 0 1.5rem 1.5rem;
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
     
     .table-header {
@@ -367,43 +454,57 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .table-header h3 {
         margin: 0;
         font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
     
     .table {
         margin: 0;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
     }
     
     .table th {
         border-top: none;
-        font-weight: 500;
-        color: #6c757d;
+        font-weight: 600;
+        color: var(--gray-color);
         text-transform: uppercase;
         font-size: 0.75rem;
         letter-spacing: 0.5px;
+        padding: 1rem;
+        background-color: #f8f9fa;
     }
     
     .table td {
         vertical-align: middle;
         padding: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .table tr:hover td {
+        background-color: rgba(58, 123, 213, 0.03);
     }
     
     .avatar {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: #3a7bd5;
+        background: var(--primary-color);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
         margin-right: 1rem;
+        flex-shrink: 0;
     }
     
     .visitor-info {
@@ -412,25 +513,27 @@
     }
     
     .visitor-info small {
-        color: #6c757d;
+        color: var(--gray-color);
         font-size: 0.8rem;
+        display: block;
     }
     
     .time-in small {
         display: block;
-        color: #6c757d;
+        color: var(--gray-color);
         font-size: 0.8rem;
     }
     
     .device-tag {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(0,210,255,0.1);
+        background: rgba(0, 210, 255, 0.1);
         padding: 0.3rem 0.8rem;
         border-radius: 20px;
-        color: #3a7bd5;
+        color: var(--primary-color);
         font-size: 0.9rem;
+        white-space: nowrap;
     }
     
     .actions {
@@ -438,6 +541,11 @@
         gap: 0.5rem;
     }
     
+    .actions .btn {
+        padding: 0.375rem 0.75rem;
+    }
+    
+    /* Empty State */
     .empty-state {
         padding: 3rem;
         text-align: center;
@@ -445,28 +553,37 @@
     
     .empty-icon {
         font-size: 3rem;
-        color: #dee2e6;
+        color: #e9ecef;
         margin-bottom: 1rem;
     }
     
     .empty-state h4 {
         margin-bottom: 0.5rem;
+        color: var(--dark-color);
     }
     
     .empty-state p {
-        color: #6c757d;
+        color: var(--gray-color);
         margin-bottom: 1.5rem;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
     
     @media (max-width: 768px) {
         .dashboard-header {
             flex-direction: column;
             text-align: center;
+            gap: 1.5rem;
         }
         
         .header-actions {
-            width: 100%;
             justify-content: center;
+            width: 100%;
         }
         
         .search-container {
@@ -477,40 +594,90 @@
             width: 100%;
         }
         
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .visitor-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .avatar {
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+        
         .actions {
             flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table th, .table td {
+            padding: 0.75rem;
+        }
+        
+        .visitor-table-container {
+            border-radius: 0;
         }
     }
 </style>
 
+<!-- JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Search functionality
         const searchInput = document.getElementById('search-visitors');
         const rows = document.querySelectorAll('#visitors-table-body tr');
         
-        searchInput.addEventListener('input', e => {
-            const value = e.target.value.toLowerCase();
+        searchInput.addEventListener('input', (e) => {
+            const value = e.target.value.toLowerCase().trim();
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(value) ? '' : 'none';
             });
         });
         
-        // Add hover effects to stat cards
+        // Animated progress bars for stat cards
         const statCards = document.querySelectorAll('.stat-card');
+        
         statCards.forEach(card => {
+            const progress = card.querySelector('.stat-progress');
+            
             card.addEventListener('mouseenter', () => {
-                const progress = card.querySelector('.stat-progress');
                 progress.style.width = '100%';
                 progress.style.transition = 'width 1.5s ease';
+                
+                // Set progress bar color based on card type
+                if (card.classList.contains('stat-card-primary')) {
+                    progress.style.background = 'var(--primary-color)';
+                } else if (card.classList.contains('stat-card-success')) {
+                    progress.style.background = 'var(--success-color)';
+                } else if (card.classList.contains('stat-card-info')) {
+                    progress.style.background = 'var(--info-color)';
+                } else if (card.classList.contains('stat-card-warning')) {
+                    progress.style.background = 'var(--warning-color)';
+                }
             });
             
             card.addEventListener('mouseleave', () => {
-                const progress = card.querySelector('.stat-progress');
                 progress.style.width = '0%';
                 progress.style.transition = 'width 0.5s ease';
             });
+        });
+        
+        // Tooltips for action buttons
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
 </script>

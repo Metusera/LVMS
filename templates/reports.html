@@ -201,7 +201,7 @@
                             {% if visitor.time_out %}
                                 {{ visitor.time_out.astimezone(kigali_tz).strftime('%I:%M %p') }}
                             {% else %}
-                                <span class="badge bg-warning text-dark">In Progress</span>
+                                <span class="badge bg-warning text-dark">In Library</span>
                             {% endif %}
                         </td>
                         <td>
@@ -229,7 +229,7 @@
                                 </span>
                             {% else %}
                                 <span class="badge bg-primary bg-opacity-10 text-primary">
-                                    <i class="bi bi-hourglass-split me-1"></i> Present
+                                    <i class="bi bi-hourglass-split me-1"></i> active
                                 </span>
                             {% endif %}
                         </td>

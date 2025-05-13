@@ -597,8 +597,3 @@ if __name__ == '__main__':
             db.session.commit()
             print("Initial admin user created")
     app.run(debug=True)
-
-x = 5
-y = 6
-z = x + y
-print(z)
